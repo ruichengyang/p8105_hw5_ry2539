@@ -130,5 +130,44 @@ Meanwhile, when the true mean is 0, 3, 4, 5, and 6, the average mean estimate fo
 
 
 ```{r homicide_data}
+
+homicide_stats <- read_csv("https://raw.githubusercontent.com/washingtonpost/data-homicides/refs/heads/master/homicide-data.csv")
+
+city_stats <- homicide_stats |>
+  mutate(city_state = paste(city, state, sep = ", ")) |> mutate(status = case_when(
+  disposition == "Closed without arrest" | disposition == "Open/No Arrest" ~ "Unsolved",
+  disposition != "Closed without arrest" & disposition != "Open/No Arrest" ~ "Solved"
+)) |> group_by(city_state) |>
+  summarise(
+    total_amount = n(),
+    unsolved_count = sum(status == "Unsolved"))
+
+baltimore_stats <- city_stats |>
+  filter(city_state == "Baltimore, MD")
+
+baltimore_test <- prop.test(
+  baltimore_stats$unsolved_count,
+  baltimore_stats$total_amount
+)
+
+baltimore_results <- broom::tidy(baltimore_test) |> select(estimate, conf.low, conf.high)
+
+baltimore_results
+
+city_intervals <- city_stats |>
+  mutate(
+    prop_test = map2(unsolved_count, total_amount, ~ prop.test(.x, .y) |> tidy())
+  ) |> unnest(prop_test) |>
+  select(city_state, estimate, conf.low, conf.high)
+
+city_intervals |>
+  arrange(desc(estimate)) |> mutate(city_state = factor(city_state, levels = city_state)) |>
+  ggplot(aes(x = estimate, y = city_state)) + geom_point() +
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high))+
+  labs(
+    x = "Estimated Proportion of Unsolved Homicide Cases",
+    y = "City and State",
+    title = "Proportion of Unsolved Homicides with 95 Percent Confidence Interval")
+
 ```
 
