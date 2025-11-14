@@ -16,13 +16,19 @@ library(purrr)
 ```{r birthday_data}
 set.seed(1)
 
+#shared birthday function#
+
 birthdays_shared <- function(n) {
   birthdays <- sample(1:365, n, replace = TRUE)
   return(length(unique(birthdays)) < n)
 }
 
+#creation of group sizes and probabilities)
+
 group_sizes <- 2:50
 probabilities <- numeric(length(group_sizes))
+
+#simulations based on how many experiments#
 
 another_experiment <- function(n, number, birthdays_shared) {
   x = 0
@@ -39,15 +45,21 @@ another_experiment <- function(n, number, birthdays_shared) {
   x
 }
 
+#10,000 simulations for all sample sizes#
+
 for (i in 2:50) {
   number_of_successes <- another_experiment(i, 10000, birthdays_shared(i))
   probabilities[i-1] <- number_of_successes/10000
 }
 
+#birthday data frame created#
+
 birthday_df <- data.frame(
   group_size = group_sizes,
   probability = probabilities
 )
+
+#plot created#
 
 birthday_df |> ggplot(aes(x = group_size, y = probability)) +
   geom_point() + geom_line() +
@@ -67,10 +79,14 @@ As the group size increases, the probability that at least two people share the 
 
 set.seed(1)
 
+#creation of variables#
+
 alpha <- 0.05
 sample_size <- 30
 sigma <- 5
 mu_values <- 0:6
+
+#function for a sample of sample size n#
 
 sim_mean_sd <- function(n, mu, sigma) {
 
@@ -84,6 +100,8 @@ sim_mean_sd <- function(n, mu, sigma) {
     )
 }
 
+#5,000 simulations for each true mean#
+
 sim_results_df = 
   expand_grid(
     true_mean = c(0, 1, 2, 3, 4, 5, 6),
@@ -94,12 +112,16 @@ sim_results_df =
       map(true_mean, \(mean) sim_mean_sd(sample_size, mu = mean, sigma))
   ) |> unnest(estimate_df)
 
+#summary of test values#
+
 summary_df <- sim_results_df |>
   group_by(mu_true) |>
   summarise(
     power = sum(p_value < alpha)/5000,
     average_mu_hat = mean(mu_hat),
     average_mu_hat_rejected = mean(mu_hat[p_value < alpha]))
+
+#plot created for two plots of power and avergae mean estimate#
 
 ggplot(summary_df, aes(x = mu_true, y = power)) +
   geom_line() + geom_point() +
@@ -131,7 +153,11 @@ Meanwhile, when the true mean is 0, 3, 4, 5, and 6, the average mean estimate fo
 
 ```{r homicide_data}
 
+#read the homicide data#
+
 homicide_stats <- read_csv("https://raw.githubusercontent.com/washingtonpost/data-homicides/refs/heads/master/homicide-data.csv")
+
+#creation of city stats#
 
 city_stats <- homicide_stats |>
   mutate(city_state = paste(city, state, sep = ", ")) |> mutate(status = case_when(
@@ -141,6 +167,8 @@ city_stats <- homicide_stats |>
   summarise(
     total_amount = n(),
     unsolved_count = sum(status == "Unsolved"))
+
+#create and filter for Baltimore homicide rates#
 
 baltimore_stats <- city_stats |>
   filter(city_state == "Baltimore, MD")
@@ -154,11 +182,15 @@ baltimore_results <- broom::tidy(baltimore_test) |> select(estimate, conf.low, c
 
 baltimore_results
 
+#confidence intervals for cities and states#
+
 city_intervals <- city_stats |>
   mutate(
     prop_test = map2(unsolved_count, total_amount, ~ prop.test(.x, .y) |> tidy())
   ) |> unnest(prop_test) |>
   select(city_state, estimate, conf.low, conf.high)
+
+#plot for confidence intervals#
 
 city_intervals |>
   arrange(desc(estimate)) |> mutate(city_state = factor(city_state, levels = city_state)) |>
