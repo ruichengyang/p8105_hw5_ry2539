@@ -1,5 +1,6 @@
 ---
 title: "Homework 5"
+author: "Ruicheng Yang"
 output: github_document
 ---
 
@@ -180,7 +181,7 @@ baltimore_test <- prop.test(
 
 baltimore_results <- broom::tidy(baltimore_test) |> select(estimate, conf.low, conf.high)
 
-baltimore_results
+baltimore_results |> knitr::kable()
 
 #confidence intervals for cities and states#
 
@@ -203,3 +204,4 @@ city_intervals |>
 
 ```
 
+We can observe from our confidence intervals that as the proportion of unsolved homicide cases estimate increases, the interval also has a larger range. The only exception to this is observed in Tulsa, Alabama. As for the highest estimate, that goes to Denver Colorado.
