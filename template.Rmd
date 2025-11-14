@@ -1,0 +1,67 @@
+---
+title: "Homework 1"
+output: html_document
+---
+
+I'm an R Markdown document! 
+
+# Section 1
+
+Here's a **code chunk** that samples from 
+a _normal distribution_:
+
+```{r setup, include = FALSE}
+library(tidyverse)
+```
+
+```{r data_summary}
+library(moderndive)
+data("early_january_weather")
+summary(early_january_weather)
+mean(early_january_weather$temp)
+```
+
+```{r data_size}
+ncol(early_january_weather)
+nrow(early_january_weather)
+```
+
+The size of this data set would have a total of 15 variables and 358 values for each variable. The mean temperature in early January would be 39.58 degrees Fahrenheit.
+
+```{r scatter_plot}
+ggplot(data = early_january_weather, aes(x=time_hour, y=temp, color = humid)) + geom_point() 
+
+ggsave("scatter_plot.pdf", height = 4, width = 4)
+```
+
+
+# Section 2
+
+I can take the mean of the sample, too!
+
+```{r dataframes}
+
+dataframe = tibble(
+  normal_distribution = rnorm(10),
+  logical_vector = (normal_distribution > 0),
+  vec_char = c("My", "name", "is", "Richard", "and", "I", "like", "watching", "TV", "shows"),
+  factor_vector = factor(vec_char, c("low", "medium", "high"))
+)
+
+```
+
+```{r dataframe mean}
+  norm_mean = mean(dataframe$normal_distribution)
+  logical_mean = mean(dataframe$logical_vector)
+  
+```
+
+The mean of the normal distribution is `r mean(dataframe$normal_distribution)`.
+The mean of the whole logical vector is `r mean(dataframe$logical_vector)`.
+
+```{r dataframe_mean_2}
+  vector_mean = mean(dataframe$vec_char)
+  factor_mean = mean(dataframe$factor_vector)
+```
+
+# Section 3
