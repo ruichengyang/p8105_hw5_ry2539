@@ -1,25 +1,66 @@
 ---
-title: "Homework 1"
-output: html_document
+title: "Homework 5"
+output: github_document
 ---
 
-I'm an R Markdown document! 
 
-# Section 1
-
-Here's a **code chunk** that samples from 
-a _normal distribution_:
+# Problem 1
 
 ```{r setup, include = FALSE}
 library(tidyverse)
+library(broom)
+library(purrr)
+
 ```
 
 ```{r data_summary}
-library(moderndive)
-data("early_january_weather")
-summary(early_january_weather)
-mean(early_january_weather$temp)
+set.seed(1)
+
+birthdays_shared <- function(n) {
+  birthdays <- sample(1:365, n, replace = TRUE)
+  return(length(unique(birthdays)) < n)
+}
+
+group_sizes <- 2:50
+probabilities <- numeric(length(group_sizes))
+
+another_experiment <- function(n, number, birthdays_shared) {
+  x = 0
+  for(i in 1:number){
+    birthdays_shared(n)
+    
+    if(birthdays_shared(n) == TRUE){
+      x = x + 1
+    }
+    else{
+      x = x
+    }
+  }
+  x
+}
+
+for (i in 2:50) {
+  number_of_successes <- another_experiment(i, 10000, birthdays_shared(i))
+  probabilities[i-1] <- number_of_successes/10000
+}
+
+birthday_df <- data.frame(
+  group_size = group_sizes,
+  probability = probabilities
+)
+
+birthday_df |> ggplot(aes(x = group_size, y = probability)) +
+  geom_point() + geom_line() +
+  labs(x = "Sample Size",
+       y = "Probability of 2 or More People Sharing a Birthday",
+       title = "Probability of Shared Birthdays with 1000 simulations per Sample Size")
+
 ```
+
+
+As the group size increases, the probability that at least two people share the same birthday also increases. Notably, at around a group size of 23 people, such probability crosses the 0.5 threshold. Finally, even at around a group size of 45 to 50, the probability is already approaching a value of 1.0.
+
+# Problem 2
 
 ```{r data_size}
 ncol(early_january_weather)
