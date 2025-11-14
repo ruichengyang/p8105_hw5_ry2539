@@ -13,7 +13,7 @@ library(purrr)
 
 ```
 
-```{r data_summary}
+```{r birthday_data}
 set.seed(1)
 
 birthdays_shared <- function(n) {
@@ -62,47 +62,73 @@ As the group size increases, the probability that at least two people share the 
 
 # Problem 2
 
-```{r data_size}
-ncol(early_january_weather)
-nrow(early_january_weather)
-```
 
-The size of this data set would have a total of 15 variables and 358 values for each variable. The mean temperature in early January would be 39.58 degrees Fahrenheit.
+```{r statistical_test}
 
-```{r scatter_plot}
-ggplot(data = early_january_weather, aes(x=time_hour, y=temp, color = humid)) + geom_point() 
+set.seed(1)
 
-ggsave("scatter_plot.pdf", height = 4, width = 4)
-```
+alpha <- 0.05
+sample_size <- 30
+sigma <- 5
+mu_values <- 0:6
 
+sim_mean_sd <- function(n, mu, sigma) {
 
-# Section 2
-
-I can take the mean of the sample, too!
-
-```{r dataframes}
-
-dataframe = tibble(
-  normal_distribution = rnorm(10),
-  logical_vector = (normal_distribution > 0),
-  vec_char = c("My", "name", "is", "Richard", "and", "I", "like", "watching", "TV", "shows"),
-  factor_vector = factor(vec_char, c("low", "medium", "high"))
-)
-
-```
-
-```{r dataframe mean}
-  norm_mean = mean(dataframe$normal_distribution)
-  logical_mean = mean(dataframe$logical_vector)
+  x = rnorm(n, mean = mu, sd = sigma)
+  test <- t.test(x, mu = 0)
   
+  tibble(
+      mu_true = mu,
+      mu_hat = mean(x),
+      p_value = test$p.value
+    )
+}
+
+sim_results_df = 
+  expand_grid(
+    true_mean = c(0, 1, 2, 3, 4, 5, 6),
+    true_sd = sigma,
+    iter = 1:5000
+  ) |> mutate(
+    estimate_df = 
+      map(true_mean, \(mean) sim_mean_sd(sample_size, mu = mean, sigma))
+  ) |> unnest(estimate_df)
+
+summary_df <- sim_results_df |>
+  group_by(mu_true) |>
+  summarise(
+    power = sum(p_value < alpha)/5000,
+    average_mu_hat = mean(mu_hat),
+    average_mu_hat_rejected = mean(mu_hat[p_value < alpha]))
+
+ggplot(summary_df, aes(x = mu_true, y = power)) +
+  geom_line() + geom_point() +
+  labs(
+    x = "True Mean (μ)",
+    y = "Power of Test",
+    title = "Power of the Statistical Test vs Effect Size"
+  )
+
+ggplot(summary_df, aes(x = mu_true)) +
+  geom_point(aes(y = average_mu_hat, color = "Average μ Estimate")) +
+  geom_line(aes(y = average_mu_hat, color = "Average μ Estimate")) +
+  geom_point(aes(y = average_mu_hat_rejected, color = "Average Rejected μ Estimate")) +
+  geom_line(aes(y = average_mu_hat_rejected, color = "Average Rejected μ Estimate"), linetype = "dashed") +
+  labs(x = "True Mean (μ)",
+       y = "Average Mean (μ) Estimate",
+       title = "Comparison of Average Mean (μ) Estimate vs True Mean (μ)")
+
 ```
 
-The mean of the normal distribution is `r mean(dataframe$normal_distribution)`.
-The mean of the whole logical vector is `r mean(dataframe$logical_vector)`.
+As the effect size increases with our true mean, there is a positive correlation between the effect size and the power of the statistical test from our plot.
 
-```{r dataframe_mean_2}
-  vector_mean = mean(dataframe$vec_char)
-  factor_mean = mean(dataframe$factor_vector)
+Meanwhile, when the true mean is 0, 3, 4, 5, and 6, the average mean estimate for rejected samples is approximately equal to the corresponding true mean value. However, when the true mean is 1 or 2, our average mean estimate across rejected samples is above the true mean by a significant degree. This may be because the power of the test for lower effect size is also lower and would introduce larger discrepancies.
+
+
+
+# Problem 3
+
+
+```{r homicide_data}
 ```
 
-# Section 3
